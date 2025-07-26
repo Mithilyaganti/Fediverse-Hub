@@ -1,73 +1,179 @@
-# Welcome to your Lovable project
+# Fediverse Hub
 
-## Project info
+A modern React-based frontend for interacting with Fediverse platforms, built with Vite, TypeScript, and Tailwind CSS.
 
-**URL**: https://lovable.dev/projects/d5e662d7-dae1-4ae8-8128-de950c581e48
+## 🚀 Quick Start
 
-## How can I edit this code?
+### Prerequisites
 
-There are several ways of editing your application.
+Make sure you have the following installed:
 
-**Use Lovable**
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+- [Git](https://git-scm.com/downloads)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d5e662d7-dae1-4ae8-8128-de950c581e48) and start prompting.
+### Setup Instructions
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Clone the repository**
 
-**Use your preferred IDE**
+   ```bash
+   git clone https://github.com/Mithilyaganti/Fediverse-Hub.git
+   cd Fediverse-Hub
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. **Run with Docker (Recommended)**
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+   ```bash
+   # Build and start the development server
+   docker-compose up --build
+   ```
 
-Follow these steps:
+   The application will be available at: **http://localhost:5173**
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Alternative: Local Development Setup**
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+   If you prefer to run without Docker, ensure you have Node.js 18+ installed:
 
-# Step 3: Install the necessary dependencies.
-npm i
+   ```bash
+   # Navigate to frontend directory
+   cd frontend
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+   # Install dependencies
+   npm install
+
+   # Start development server
+   npm run dev
+   ```
+
+## 🛠️ Available Commands
+
+### Docker Commands
+
+```bash
+# Start the application
+docker-compose up
+
+# Build and start (rebuild if changes made)
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# Stop the application
+docker-compose down
+
+# View logs
+docker-compose logs -f
 ```
 
-**Edit a file directly in GitHub**
+### Local Development Commands
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+cd frontend
 
-**Use GitHub Codespaces**
+# Install dependencies
+npm install
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Start development server
+npm run dev
 
-## What technologies are used for this project?
+# Build for production
+npm run build
 
-This project is built with:
+# Preview production build
+npm run preview
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Run linting
+npm run lint
+```
 
-## How can I deploy this project?
+## 📁 Project Structure
 
-Simply open [Lovable](https://lovable.dev/projects/d5e662d7-dae1-4ae8-8128-de950c581e48) and click on Share -> Publish.
+```
+Fediverse-Hub/
+├── docker-compose.yml          # Docker Compose configuration
+├── frontend/                   # React frontend application
+│   ├── Dockerfile             # Frontend Docker configuration
+│   ├── src/                   # Source code
+│   │   ├── components/        # React components
+│   │   │   └── ui/           # shadcn/ui components
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── lib/              # Utility functions
+│   │   └── pages/            # Page components
+│   ├── public/               # Static assets
+│   ├── package.json          # Dependencies and scripts
+│   └── vite.config.ts        # Vite configuration
+└── phases/                   # Development phase documentation
+```
 
-## Can I connect a custom domain to my Lovable project?
+## 🔧 Technologies Used
 
-Yes, you can!
+- **Frontend Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **State Management**: React Query (TanStack Query)
+- **Containerization**: Docker & Docker Compose
+- **Development**: Hot reload, ESLint
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🌐 Environment Variables
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The application uses the following environment variable:
+
+- `VITE_API_BASE_URL`: Base URL for API calls (default: `http://localhost:3000`)
+
+## 🐛 Troubleshooting
+
+### Docker Issues
+
+If you encounter Docker build issues:
+
+```bash
+# Clean Docker cache and rebuild
+docker system prune -f
+docker-compose build --no-cache
+docker-compose up
+```
+
+### Port Already in Use
+
+If port 5173 is already in use:
+
+```bash
+# Check what's using the port
+lsof -i :5173
+
+# Kill the process or modify docker-compose.yml to use a different port
+```
+
+### npm Install Issues
+
+If npm install fails in the container:
+
+```bash
+# Try building with host network
+docker build --network=host -t fediverse-frontend ./frontend
+```
+
+## 📝 Development Phases
+
+This project is developed in phases:
+
+- **Phase 1**: ✅ Frontend containerization with Docker
+- **Phase 2**: 🔄 Currently in development
+- **Future Phases**: Backend integration, Fediverse API connections
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Happy coding! 🎉**
