@@ -98,6 +98,16 @@ export const Feed = () => {
     }));
   };
 
+  const handleLike = (postId: string) => {
+    console.log(`Liked post ${postId}`);
+    // In a real app, this would send a like to the server
+  };
+
+  const handleRetweet = (postId: string) => {
+    console.log(`Retweeted post ${postId}`);
+    // In a real app, this would retweet the post
+  };
+
   useEffect(() => {
     loadMorePosts();
   }, []);
@@ -112,6 +122,8 @@ export const Feed = () => {
           <Post
             post={post}
             onVote={handleVote}
+            onLike={handleLike}
+            onRetweet={handleRetweet}
           />
         </div>
       ))}

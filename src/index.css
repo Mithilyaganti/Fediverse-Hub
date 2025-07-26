@@ -44,11 +44,11 @@ All colors MUST be HSL.
     --input: 42 83% 91%;
     --ring: 199 100% 14%;
     
-    /* Vote colors */
-    --upvote: 201 33% 57%;
-    --downvote: 350 87% 43%;
-    --upvote-active: 201 60% 40%;
-    --downvote-active: 350 87% 35%;
+    /* Social colors */
+    --like: 0 84% 60%;
+    --like-hover: 0 84% 50%;
+    --retweet: 142 76% 36%;
+    --retweet-hover: 142 76% 30%;
 
     --radius: 0.5rem;
 

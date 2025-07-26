@@ -1,10 +1,13 @@
 import { Users, Activity } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
+import { ProfileButton } from './ProfileButton';
 
 export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
+          <ProfileButton />
           <div className="flex items-center space-x-2">
             <div className="relative">
               <Users className="h-8 w-8 text-primary" />
@@ -17,11 +20,14 @@ export const Header = () => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <div className="text-sm text-muted-foreground">
-            Connected to Fediverse
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="text-sm text-muted-foreground">
+              Connected to Fediverse
+            </div>
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
           </div>
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <ThemeToggle />
         </div>
       </div>
     </header>

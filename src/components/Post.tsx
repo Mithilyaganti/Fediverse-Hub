@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, MessageCircle, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Repeat2, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,9 @@ interface PostData {
 interface PostProps {
   post: PostData;
   onVote: (postId: string, voteType: 'up' | 'down') => void;
+  onLike?: (postId: string) => void;
+  onRetweet?: (postId: string) => void;
+  showCommentsInline?: boolean;
 }
 
 const formatTimeAgo = (timestamp: string) => {
@@ -41,8 +45,9 @@ const getPlatformColor = (platform: string) => {
   }
 };
 
-export const Post = ({ post, onVote }: PostProps) => {
+export const Post = ({ post, onVote, onLike, onRetweet, showCommentsInline = false }: PostProps) => {
   const [showComments, setShowComments] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Card className="p-6 space-y-4 hover:shadow-md transition-shadow">
@@ -50,7 +55,12 @@ export const Post = ({ post, onVote }: PostProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <span className="font-semibold text-foreground">@{post.author}</span>
+            <span 
+              className="font-semibold text-foreground hover:text-primary cursor-pointer transition-colors"
+              onClick={() => navigate(`/user/${post.author}`)}
+            >
+              @{post.author}
+            </span>
             <Badge variant="secondary" className={`text-xs ${getPlatformColor(post.platform)} text-white`}>
               {post.platform}
             </Badge>
@@ -72,48 +82,38 @@ export const Post = ({ post, onVote }: PostProps) => {
       {/* Actions */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center space-x-4">
-          {/* Vote buttons */}
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onVote(post.id, 'up')}
-              className={`h-8 w-8 p-0 hover:bg-vote-up/10 ${
-                post.userVote === 'up' 
-                  ? 'text-vote-up-active bg-vote-up/10' 
-                  : 'text-muted-foreground hover:text-vote-up'
-              }`}
-            >
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            
-            <span className={`min-w-[2rem] text-center text-sm font-medium ${
-              post.votes > 0 ? 'text-vote-up' : 
-              post.votes < 0 ? 'text-vote-down' : 
-              'text-muted-foreground'
-            }`}>
-              {post.votes}
-            </span>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onVote(post.id, 'down')}
-              className={`h-8 w-8 p-0 hover:bg-vote-down/10 ${
-                post.userVote === 'down' 
-                  ? 'text-vote-down-active bg-vote-down/10' 
-                  : 'text-muted-foreground hover:text-vote-down'
-              }`}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Like and Retweet buttons */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onLike?.(post.id)}
+            className="flex items-center space-x-2 text-muted-foreground hover:text-red-500 transition-colors"
+          >
+            <Heart className="h-4 w-4" />
+            <span className="text-sm">{post.votes}</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRetweet?.(post.id)}
+            className="flex items-center space-x-2 text-muted-foreground hover:text-green-500 transition-colors"
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span className="text-sm">Retweet</span>
+          </Button>
 
           {/* Comments button */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowComments(!showComments)}
+            onClick={() => {
+              if (showCommentsInline) {
+                setShowComments(!showComments);
+              } else {
+                navigate(`/post/${post.id}/comments`);
+              }
+            }}
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
           >
             <MessageCircle className="h-4 w-4" />
@@ -123,7 +123,7 @@ export const Post = ({ post, onVote }: PostProps) => {
       </div>
 
       {/* Comments Section */}
-      {showComments && (
+      {showComments && showCommentsInline && (
         <div className="border-t pt-4">
           <CommentSection postId={post.id} />
         </div>
