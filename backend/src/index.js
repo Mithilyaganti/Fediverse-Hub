@@ -10,11 +10,10 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet());
 
-const PORT = process.env.PORT || 3000;
+const routes = require('./routes');
+app.use(routes);
 
-app.get('/', (req, res) => {
-    res.send('FediStream backend API is running!');
-});
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
