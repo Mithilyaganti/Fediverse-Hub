@@ -1,4 +1,5 @@
 const { getOne, update, query } = require('../database/queries');
+const cacheService = require('../services/cacheService');
 
 /**
  * Get user settings
@@ -152,6 +153,14 @@ async function updateSettings(req, res) {
                 updatedAt: updatedSettings.updated_at
             }
         });
+
+        // Invalidate user profile cache since settings have changed
+        const cacheKey = `user:${req.user.id}:profile`;
+        const cacheDeleted = await cacheService.del(cacheKey);
+        if (cacheDeleted) {
+            console.log(`🗑️  Invalidated cache for user ${req.user.id} after settings update`);
+        }
+        
     } catch (error) {
         console.error('Update settings error:', error);
         

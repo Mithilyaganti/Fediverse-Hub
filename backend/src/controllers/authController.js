@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { query, getOne, insert, transaction } = require('../database/queries');
+const { getOne, query, transaction } = require('../database/queries');
+const cacheService = require('../services/cacheService');
 
 /**
  * Generate JWT token for user
@@ -183,8 +184,21 @@ async function logout(req, res) {
  */
 async function getCurrentUser(req, res) {
     try {
-        // Get user details with profile
-        const userWithProfile = await getOne(`
+        const userId = req.user.id;
+        const cacheKey = `user:${userId}:profile`;
+
+        // Try to get from cache first
+        let userWithProfile = await cacheService.get(cacheKey);
+        
+        if (userWithProfile) {
+            console.log(`📦 Cache HIT for user ${userId}`);
+            return res.json({ user: userWithProfile, cache_hit: true });
+        }
+
+        console.log(`🔍 Cache MISS for user ${userId}, fetching from database`);
+
+        // Get user details with profile from database
+        const dbResult = await getOne(`
             SELECT 
                 u.id, u.email, u.created_at, u.updated_at,
                 p.display_name, p.bio, p.avatar_url,
@@ -193,31 +207,41 @@ async function getCurrentUser(req, res) {
             LEFT JOIN user_profiles p ON u.id = p.user_id
             LEFT JOIN settings s ON u.id = s.user_id
             WHERE u.id = $1
-        `, [req.user.id]);
+        `, [userId]);
 
-        if (!userWithProfile) {
+        if (!dbResult) {
             return res.status(404).json({
                 error: 'User not found',
                 message: 'User account could not be found'
             });
         }
 
+        // Structure the user data
+        const userData = {
+            id: dbResult.id,
+            email: dbResult.email,
+            displayName: dbResult.display_name,
+            bio: dbResult.bio,
+            avatarUrl: dbResult.avatar_url,
+            settings: {
+                theme: dbResult.theme,
+                language: dbResult.language,
+                notificationsEnabled: dbResult.notifications_enabled,
+                emailNotifications: dbResult.email_notifications
+            },
+            createdAt: dbResult.created_at,
+            updatedAt: dbResult.updated_at
+        };
+
+        // Cache the user data for 5 minutes (300 seconds)
+        const cached = await cacheService.set(cacheKey, userData, 300);
+        if (cached) {
+            console.log(`💾 Cached user data for ${userId}`);
+        }
+
         res.json({
-            user: {
-                id: userWithProfile.id,
-                email: userWithProfile.email,
-                displayName: userWithProfile.display_name,
-                bio: userWithProfile.bio,
-                avatarUrl: userWithProfile.avatar_url,
-                settings: {
-                    theme: userWithProfile.theme,
-                    language: userWithProfile.language,
-                    notificationsEnabled: userWithProfile.notifications_enabled,
-                    emailNotifications: userWithProfile.email_notifications
-                },
-                createdAt: userWithProfile.created_at,
-                updatedAt: userWithProfile.updated_at
-            }
+            user: userData,
+            cache_hit: false
         });
     } catch (error) {
         console.error('Get current user error:', error);

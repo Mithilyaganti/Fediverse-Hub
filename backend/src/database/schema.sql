@@ -103,6 +103,36 @@ CREATE TABLE IF NOT EXISTS comment_votes (
     UNIQUE(user_id, comment_id)
 );
 
+-- Mastodon apps table (for OAuth app registration)
+CREATE TABLE IF NOT EXISTS mastodon_apps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    instance_url VARCHAR(500) UNIQUE NOT NULL,
+    client_id VARCHAR(500) NOT NULL,
+    client_secret VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- OAuth states table (for OAuth flow security)
+CREATE TABLE IF NOT EXISTS oauth_states (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    state VARCHAR(100) UNIQUE NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform VARCHAR(50) NOT NULL,
+    instance_url VARCHAR(500),
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add instance_url column if it doesn't exist (for backward compatibility)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'oauth_states' AND column_name = 'instance_url') THEN
+        ALTER TABLE oauth_states ADD COLUMN instance_url VARCHAR(500);
+    END IF;
+END $$;
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
@@ -116,6 +146,10 @@ CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_comment_id);
 CREATE INDEX IF NOT EXISTS idx_comments_author ON comments(author_user_id);
 CREATE INDEX IF NOT EXISTS idx_comment_votes_user_comment ON comment_votes(user_id, comment_id);
+CREATE INDEX IF NOT EXISTS idx_mastodon_apps_instance ON mastodon_apps(instance_url);
+CREATE INDEX IF NOT EXISTS idx_oauth_states_state ON oauth_states(state);
+CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
+CREATE INDEX IF NOT EXISTS idx_oauth_states_user ON oauth_states(user_id);
 
 -- Triggers to update updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -134,6 +168,7 @@ DROP TRIGGER IF EXISTS update_user_servers_updated_at ON user_servers;
 DROP TRIGGER IF EXISTS update_posts_updated_at ON posts;
 DROP TRIGGER IF EXISTS update_comments_updated_at ON comments;
 DROP TRIGGER IF EXISTS update_comment_votes_updated_at ON comment_votes;
+DROP TRIGGER IF EXISTS update_mastodon_apps_updated_at ON mastodon_apps;
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -142,3 +177,4 @@ CREATE TRIGGER update_user_servers_updated_at BEFORE UPDATE ON user_servers FOR 
 CREATE TRIGGER update_posts_updated_at BEFORE UPDATE ON posts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_comments_updated_at BEFORE UPDATE ON comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_comment_votes_updated_at BEFORE UPDATE ON comment_votes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_mastodon_apps_updated_at BEFORE UPDATE ON mastodon_apps FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
