@@ -5,12 +5,14 @@ const methodOverride = require('method-override');
 const dotenv = require('dotenv');
 const { testDatabaseConnection, initializeDatabase } = require('./config/database');
 const cacheService = require('./services/cacheService');
+const queueService = require('./services/queueService');
 
 // Import routes
 const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const fediverseRoutes = require('./routes/fediverse');
 const feedRoutes = require('./routes/feed');
+const queueRoutes = require('./routes/queue');
 
 dotenv.config();
 
@@ -31,17 +33,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', fediverseRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/queue', queueRoutes);
 
 // Add database status endpoint
 app.get('/health', async (req, res) => {
     try {
         const dbConnected = await testDatabaseConnection();
         const cacheConnected = cacheService.isReady();
+        const queueConnected = queueService.isConnected;
         
         res.json({
             status: 'ok',
             database: dbConnected ? 'connected' : 'disconnected',
             cache: cacheConnected ? 'connected' : 'disconnected',
+            queue: queueConnected ? 'connected' : 'disconnected',
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -49,6 +54,7 @@ app.get('/health', async (req, res) => {
             status: 'error',
             database: 'error',
             cache: 'error',
+            queue: 'error',
             error: error.message,
             timestamp: new Date().toISOString()
         });
@@ -75,6 +81,14 @@ async function startServer() {
             console.warn('⚠️  Cache service failed to initialize (continuing without cache):', error.message);
         }
 
+        // Initialize Background Job Queue
+        try {
+            await queueService.initialize();
+            console.log('🔗 Queue service initialized successfully');
+        } catch (error) {
+            console.warn('⚠️  Queue service failed to initialize (continuing without queues):', error.message);
+        }
+
         // Start the server
         app.listen(PORT, () => {
             console.log(`🚀 Server listening on port ${PORT}`);
@@ -99,6 +113,10 @@ process.on('SIGINT', async () => {
         // Close cache connection
         await cacheService.disconnect();
         console.log('✅ Cache connection closed');
+
+        // Close queue service
+        await queueService.shutdown();
+        console.log('✅ Queue service closed');
     } catch (error) {
         console.error('❌ Error during shutdown:', error);
     }
