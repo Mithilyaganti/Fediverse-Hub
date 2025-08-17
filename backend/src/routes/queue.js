@@ -10,6 +10,13 @@ router.get('/stats', authenticateToken, queueController.getQueueStats);
 // Simple test endpoint (no auth required for testing)
 router.post('/test-simple', queueController.testSimpleJob);
 
+// Content aggregation test endpoint (no auth required for testing)
+router.post('/test-content-fetch', queueController.testContentAggregation);
+
+// Development endpoints (no auth required for testing)
+router.post('/seed-test-data', queueController.seedTestData);
+router.get('/cached-posts', queueController.getCachedPosts);
+
 // Test endpoints for different job types
 router.post('/test/content-aggregation', authenticateToken, queueController.addContentAggregationJob);
 router.post('/test/notification', authenticateToken, queueController.addNotificationJob);

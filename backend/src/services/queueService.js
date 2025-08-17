@@ -1,5 +1,6 @@
 const { Queue, Worker } = require('bullmq');
 const redis = require('redis');
+const ContentAggregationService = require('./contentAggregationService');
 
 class QueueService {
     constructor() {
@@ -7,6 +8,7 @@ class QueueService {
         this.queues = {};
         this.workers = {};
         this.isConnected = false;
+        this.contentAggregationService = new ContentAggregationService();
     }
 
     async initialize() {
@@ -139,24 +141,35 @@ class QueueService {
         
         try {
             switch (action) {
+                case 'fetchPosts':
                 case 'fetch-posts':
                     console.log(`📥 Fetching posts for user ${userId} from ${platform}...`);
-                    // TODO: Implement actual content fetching logic in Phase 15
-                    await this.simulateAsyncWork(2000);
-                    console.log(`✅ Successfully fetched posts for user ${userId} from ${platform}`);
-                    break;
+                    
+                    if (platform === 'mastodon') {
+                        const result = await this.contentAggregationService.fetchPostsForUser(userId, { limit: 20 });
+                        console.log(`✅ Mastodon fetch result:`, result);
+                        return result;
+                    } else {
+                        console.log(`⚠️ Platform ${platform} not yet supported for content fetching`);
+                        return { success: false, error: 'Platform not supported' };
+                    }
+                
+                case 'fetch-all-posts':
+                    console.log(`📥 Fetching posts from all connected accounts...`);
+                    const result = await this.contentAggregationService.fetchAllMastodonPosts({ limit: 20 });
+                    console.log(`✅ All accounts fetch result:`, result);
+                    return result;
                 
                 case 'sync-timeline':
                     console.log(`🔄 Syncing timeline for user ${userId}...`);
                     await this.simulateAsyncWork(1500);
                     console.log(`✅ Timeline synced for user ${userId}`);
-                    break;
+                    return { success: true, processedAt: new Date() };
                 
                 default:
                     console.log(`ℹ️ Unknown content aggregation action: ${action}`);
+                    return { success: false, error: 'Unknown action' };
             }
-
-            return { success: true, processedAt: new Date() };
             
         } catch (error) {
             console.error(`❌ Content aggregation job failed:`, error.message);

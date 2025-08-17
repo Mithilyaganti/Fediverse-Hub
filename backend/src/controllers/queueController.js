@@ -1,4 +1,6 @@
 const queueService = require('../services/queueService');
+const TestDataSeeder = require('../services/testDataSeeder');
+const ContentAggregationService = require('../services/contentAggregationService');
 
 class QueueController {
     // Simple test job for testing without auth
@@ -41,6 +43,110 @@ class QueueController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to add test job',
+                error: error.message
+            });
+        }
+    }
+
+    // Test content aggregation job without auth
+    async testContentAggregation(req, res) {
+        try {
+            const { userId = 'test-user-id', platform = 'mastodon', action = 'fetch-all-posts', delay = 0 } = req.body;
+            
+            const job = await queueService.addContentAggregationJob(
+                userId, 
+                platform, 
+                action, 
+                { 
+                    delay: delay,
+                    priority: 1 // Higher priority for testing
+                }
+            );
+
+            if (!job) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to add content aggregation job - job was not created',
+                    error: 'Queue service returned null'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Content aggregation job added to queue successfully',
+                jobId: job.id,
+                jobName: job.name,
+                data: job.data,
+                action: action,
+                delay: delay
+            });
+        } catch (error) {
+            console.error('Error adding content aggregation job:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to add content aggregation job',
+                error: error.message
+            });
+        }
+    }
+
+    // Seed test data for development
+    async seedTestData(req, res) {
+        try {
+            const seeder = new TestDataSeeder();
+            const result = await seeder.seedTestData();
+            const postsResult = await seeder.seedTestPosts();
+            
+            res.json({
+                success: true,
+                message: 'Test data seeded successfully',
+                data: {
+                    user: result,
+                    posts: postsResult
+                }
+            });
+        } catch (error) {
+            console.error('Error seeding test data:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to seed test data',
+                error: error.message
+            });
+        }
+    }
+
+    // Get cached posts for testing
+    async getCachedPosts(req, res) {
+        try {
+            const { limit = 20, offset = 0, platform, instance_url } = req.query;
+            
+            const contentService = new ContentAggregationService();
+            const posts = await contentService.getCachedPosts({
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                platform,
+                instance_url
+            });
+
+            const stats = await contentService.getPostsStats();
+
+            res.json({
+                success: true,
+                data: {
+                    posts,
+                    stats,
+                    pagination: {
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        total: posts.length
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error getting cached posts:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get cached posts',
                 error: error.message
             });
         }
